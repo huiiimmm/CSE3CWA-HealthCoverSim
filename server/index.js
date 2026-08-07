@@ -21,13 +21,25 @@ app.listen(PORT, () => {
 });
 
 db.serialize(() => {
-    db.run(`
-        CREATE TABLE IF NOT EXISTS users(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            email TEXT
-        )
-    `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users(
+      id INTEGER PRIMARY KEY AUTOINCREMENT, 
+      name TEXT, 
+      email TEXT
+    );
+    CREATE TABLE IF NOT EXISTS hospital_tiers(
+      hospital_cover TEXT, 
+      pp_adult INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS extra_tiers(
+      extras_cover TEXT, 
+      pp_adult INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS family_coverage(
+      cover_type TEXT, 
+      adults_count INTEGER, 
+      upgrade_fee INTEGER
+    );`);
 });
 
 app.post("/users", (req, res) => {
@@ -69,3 +81,58 @@ app.get("/users", (req,res)=>{
     );
 
 });
+
+app.get("/hospital_tiers", (req,res)=>{
+
+    db.all(
+        "SELECT * FROM hospital_tiers",
+        [],
+        (err, rows)=>{
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(rows);
+
+        }
+    );
+
+});
+
+app.get("/extra_tiers", (req,res)=>{
+
+    db.all(
+        "SELECT * FROM extra_tiers",
+        [],
+        (err, rows)=>{
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(rows);
+
+        }
+    );
+
+});
+
+app.get("/family_coverage", (req,res)=>{
+
+    db.all(
+        "SELECT * FROM family_coverage",
+        [],
+        (err, rows)=>{
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(rows);
+
+        }
+    );
+
+});
+
