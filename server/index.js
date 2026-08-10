@@ -39,6 +39,10 @@ db.serialize(() => {
       cover_type TEXT, 
       adults_count INTEGER, 
       upgrade_fee INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS lhc_loading(
+      cover_history TEXT,
+      lhc_loading FLOAT
     );`);
 });
 
