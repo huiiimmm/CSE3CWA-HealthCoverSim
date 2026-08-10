@@ -10,6 +10,7 @@ function App() {
   const [selectedHospitalTier, setSelectedHospitalTier] = useState("");
   const [selectedExtraTier, setSelectedExtraTier] = useState("");
   const [selectedFamilyCoverage, setSelectedFamilyCoverage] = useState("");
+  const [selectedPaymentFrequency, setSelectedPaymentFrequency] = useState("");
 
   useEffect(() => {
 
@@ -193,6 +194,25 @@ function App() {
                 </select>
         </div>
     </div>
+	 <div>
+                <label htmlFor="payment-frequency-select" style={{ display: "block", fontWeight: "bold" }}>
+                        Select Payment Frequency
+                </label>
+                <select
+                        id="payment-frequency-select"
+                        value={selectedPaymentFrequency}
+                        onChange={(e) => setSelectedPaymentFrequency(e.target.value)}
+                >
+                        <option value="">-- Choose a Frequency Option --</option>
+                        <option value="monthly">Monthly</option>
+			<option value="yearly">Yearly</option>
+                </select>
+        </div>
+    {(selectedPaymentFrequency.trim().toLowerCase() === "yearly") && (
+	<div>
+		<p>Annual Payment Discount (0-10%)</p>
+	</div>
+    )}
     <div>
         <h2>Payment</h2>
     </div>
@@ -201,3 +221,4 @@ function App() {
 }
 
 export default App;
+
