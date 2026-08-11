@@ -1,28 +1,26 @@
+
 import { useEffect, useState, input } from "react";
 
 function App() {
-
-  const [users, setUsers] = useState([]);
   const [hospital_tiers, setHospital_tiers] = useState([]);
   const [extra_tiers, setExtra_tiers] = useState([]);
   const [family_coverage, setFamily_coverage] = useState([]);
   
+  const [userId, setUserId] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [applicant1Age, setApplicant1Age] = useState(0);
+  const [applicant1CoverHistory, setApplicant1CoverHistory] = useState("");
+  const [applicant2Age, setApplicant2Age] = useState("");
+  const [applicant2CoverHistory, setApplicant2CoverHistory] = useState("");
   const [selectedHospitalTier, setSelectedHospitalTier] = useState("");
   const [selectedExtraTier, setSelectedExtraTier] = useState("");
   const [selectedFamilyCoverage, setSelectedFamilyCoverage] = useState("");
   const [selectedPaymentFrequency, setSelectedPaymentFrequency] = useState("");
+  const [annualDiscount, setAnnualDiscount] = useState(0.0);
+  const [notes, setNotes] = useState("");
+
 
   useEffect(() => {
-
-    fetch("http://localhost:5000/users")
-      .then((res) => res.json())
-      .then((data) => {
-        setUsers(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-
     fetch("http://localhost:5000/hospital_tiers")
       .then((res) => res.json())
       .then((data) => {
@@ -50,9 +48,15 @@ function App() {
         console.error(error);
       });
 
-
+    fetch("http://localhost:5000/user_selections")
+      .then((res) => res.json())
+      .then((data) => {
+        setFamily_coverage(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }, []);
-
 
   return (
     <>
@@ -66,7 +70,7 @@ function App() {
 		placeholder="e.g. James Baxter"
 		/>
     </div>
-    <div>
+	<div>
         <div>
                 <label htmlFor="family-cover-select" style={{ display: "block", fontWeight: "bold" }}>
                         Select Family Cover
@@ -80,7 +84,7 @@ function App() {
                         {family_coverage.map((tier, index) => (
                                 <option key={index} value={tier.cover_type}>
                                         {tier.cover_type} ({tier.adults_count} adults ${tier.upgrade_fee} extra monthly fee)    
-                                </option>
+                                </option>                
                                 ))}
                 </select>
 	</div>
@@ -88,19 +92,37 @@ function App() {
         <label htmlFor="applicant1age">Applicant 1 Age: </label>
         <input
                 type="number"
-                id="applicant1age"
+                id="applicant1age"            
                 name="applicant1age"
 		min="18"
 		max="100"
                 placeholder="18-100"
+		value={applicant1Age}
+                onChange={(e) => {const value = parseInt(e.target.value, 10);
+                                  setApplicant1Age(isNaN(value) ? '' : value);
+                }}
+
                 />
 	
         </div>
 	<div>
 	<h3>Applicant 1 Hospital Cover History</h3>
+	<label htmlFor="applicant1coverhistory">Applicant 1 Cover History: </label>
+	<select
+		id="applicant1coverhistory"
+		value={applicant1CoverHistory}
+		onChange={(e) => setApplicant1CoverHistory(e.target.value)}
+	>
+		<option value="">-- Select Cover History --</option>
+		<option>yes</option>
+		<option>no</option>
+		<option>not sure</option>
+	</select>
 	</div>
     </div>
+
     {(selectedFamilyCoverage.trim().toLowerCase() === "couple" || selectedFamilyCoverage.trim().toLowerCase() === "family") && (
+	<>
 	<div>
         <label htmlFor="applicant2age">Applicant 2 Age: </label>
         <input
@@ -110,31 +132,28 @@ function App() {
                 min="18"
                 max="100"
                 placeholder="18-100"
+                value={applicant2Age}
+                onChange={(e) => {const value = parseInt(e.target.value, 10);
+                                  setApplicant2Age(isNaN(value) ? '' : value);
+                }}
                 />
-	
-	
-        <h3>Applicant 2 Hospital Cover History</h3>
 	</div>
-    )}
-    <div>
-	<h2>Hospital Cover</h2>
-	<table border="1" style={{ width: "100%", textAlign: "left", marginTop: "10px" }}>
-		<thead>
-			<tr>
-				<th>Hospital Cover</th>
-				<th>Price per Adult</th>
-			</tr>
-		</thead>
-		<tbody>
-			{hospital_tiers.map((tier, index) => (
-				<tr key={index}>
-					<td>{tier.hospital_cover}</td>
-					<td>${tier.pp_adult}</td>
-				</tr>
-			))}
-		</tbody>
-	</table>
-    </div>
+	<div>
+        <h3>Applicant 2 Hospital Cover History</h3>
+        <label htmlFor="applicant2coverhistory">Applicant 2 Cover History: </label>
+        <select
+                id="applicant2coverhistory"
+                value={applicant2CoverHistory}
+                onChange={(e) => setApplicant2CoverHistory(e.target.value)}
+        >
+                <option value="">-- Select Cover History --</option>
+                <option>yes</option>
+                <option>no</option>
+                <option>not sure</option>
+        </select>
+	</div>
+	</>
+	)}
     <div>
     	<h2>Select Hospital Cover</h2>
 	<div>
@@ -154,25 +173,6 @@ function App() {
 				))}
 		</select>
 	</div>
-    </div>
-    <div>
-        <h2>Extras Cover</h2>
-        <table border="1" style={{ width: "100%", textAlign: "left", marginTop: "10px" }}>
-                <thead>
-                        <tr>
-                                <th>Extras Cover</th>
-                                <th>Price per Adult</th>
-                        </tr>
-                </thead>
-                <tbody>
-                        {extra_tiers.map((tier, index) => (
-                                <tr key={index}>
-                                        <td>{tier.extras_cover}</td>
-                                        <td>${tier.pp_adult}</td>
-                                </tr>
-                        ))}
-                </tbody>
-        </table>
     </div>
     <div>
         <h2>Select Extras Cover</h2>
@@ -214,7 +214,9 @@ function App() {
 	</div>
     )}
     <div>
-        <h2>Payment</h2>
+	<button>
+        <h2>Proceed to Payment</h2>
+	</button>
     </div>
     </>
   );

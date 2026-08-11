@@ -73,3 +73,20 @@ app.get("/family_coverage", (req,res)=>{
 
 });
 
+app.get("/user_selections", (req,res)=>{
+
+    db.all(
+        "SELECT * FROM user_selections",
+        [],
+        (err, rows)=>{
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(rows);
+
+        }
+    );
+
+});
