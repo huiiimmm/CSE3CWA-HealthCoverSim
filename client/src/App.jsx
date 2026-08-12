@@ -1,11 +1,11 @@
-
 import { useEffect, useState, input } from "react";
 
 function App() {
   const [hospital_tiers, setHospital_tiers] = useState([]);
   const [extra_tiers, setExtra_tiers] = useState([]);
   const [family_coverage, setFamily_coverage] = useState([]);
-  
+  const [user_selections, setUser_selections] = useState([]);  
+
   const [userId, setUserId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [applicant1Age, setApplicant1Age] = useState(0);
@@ -19,45 +19,111 @@ function App() {
   const [annualDiscount, setAnnualDiscount] = useState(0.0);
   const [notes, setNotes] = useState("");
 
+  const [displayTotal, setDisplayTotal] = useState(false);
+
+  const nullInputCheck = () => { 
+  // null checks
+  if (customerName === '' ||
+      applicant1Age === '' ||
+      applicant1CoverHistory === '' ||
+      selectedHospitalTier === '' ||
+      selectedExtraTier === '' ||
+      selectedFamilyCoverage === '' ||
+      selectedPaymentFrequency === '') {
+	
+	console.log("Please ensure You have filled out all required fields.");
+	alert("please fill it out");
+	return;
+	}
+      
+      const familyCoverageSelection = selectedFamilyCoverage.trim().toLowerCase();
+      if (selectedFamilyCoverage === "couple" || selectedFamilyCoverage === "family") {
+	if (applicant2Age === '' || applicant2CoverHistory === '') {
+
+		console.log("Please enter details for Applicant 2.");
+		alert("please fill out applicant 2 as well pleeeeeeaaaaaaase");
+		return;
+	}
+	}
+      
+      recordCustomerLog(); 
+  };
+
+  const recordCustomerLog = () => {
+	const customerLogData = {
+	  name: customerName,
+	  age: applicant1Age,
+	  tier: selectedHospitalTier,
+	  frequency: selectedPaymentFrequency,
+	  timestamp: new Date().toISOString()
+	};
+	console.log("log recording successful:", recordCustomerLog);
+	
+	setDisplayTotal(true);
+  	return;
+  }
 
   useEffect(() => {
-    fetch("http://localhost:5000/hospital_tiers")
-      .then((res) => res.json())
-      .then((data) => {
-        setHospital_tiers(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    fetch("/api/hospital_tiers")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error, status: ${res.status}`);
+          }
+          return res.json();
+          })
+          .then((data) => {
+                setHospital_tiers(Array.isArray(data) ? data : []);
+                })
+                .catch((error) => {
+                  console.error("fetch error:", error);
+                  setHospital_tiers([]);
+                });
 
-    fetch("http://localhost:5000/extra_tiers")
-      .then((res) => res.json())
-      .then((data) => {
-        setExtra_tiers(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    fetch("/api/extra_tiers")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error, status: ${res.status}`);
+          }
+          return res.json();
+          })
+          .then((data) => {
+                setExtra_tiers(Array.isArray(data) ? data : []);
+                })
+                .catch((error) => {
+                  console.error("fetch error:", error);
+                  setExtra_tiers([]);
+                });
 
-    fetch("http://localhost:5000/family_coverage")
-      .then((res) => res.json())
-      .then((data) => {
-        setFamily_coverage(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    fetch("/api/family_coverage")
+      .then((res) => {
+	if (!res.ok) {
+	  throw new Error(`HTTP error, status: ${res.status}`);
+	  }
+	  return res.json();
+	  })
+	  .then((data) => {
+		setFamily_coverage(Array.isArray(data) ? data : []);
+		})
+		.catch((error) => {
+		  console.error("fetch error:", error);
+		  setFamily_coverage([]);
+		}); 
 
-    fetch("http://localhost:5000/user_selections")
-      .then((res) => res.json())
-      .then((data) => {
-        setFamily_coverage(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, []);
-
+    fetch("/api/user_selections")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error, status: ${res.status}`);
+          }
+          return res.json();
+          })
+          .then((data) => {
+                setUser_selections(Array.isArray(data) ? data : []);
+                })
+                .catch((error) => {
+                  console.error("fetch error:", error);
+                  setUser_selections([]);
+                });
+	});
   return (
     <>
     <div>
@@ -68,6 +134,8 @@ function App() {
 		id="customername" 
 		name="customername" 
 		placeholder="e.g. James Baxter"
+		value={customerName}
+		onChange={(e) => setCustomerName(e.target.value)}
 		/>
     </div>
 	<div>
@@ -81,7 +149,7 @@ function App() {
                         onChange={(e) => setSelectedFamilyCoverage(e.target.value)}
                 >
                         <option value="">-- Choose a Family Tier --</option>
-                        {family_coverage.map((tier, index) => (
+                        {family_coverage?.map((tier, index) => (
                                 <option key={index} value={tier.cover_type}>
                                         {tier.cover_type} ({tier.adults_count} adults ${tier.upgrade_fee} extra monthly fee)    
                                 </option>                
@@ -155,7 +223,7 @@ function App() {
 	</>
 	)}
     <div>
-    	<h2>Select Hospital Cover</h2>
+    <h2>Select Hospital Cover</h2>
 	<div>
 		<label htmlFor="hospital-cover-select" style={{ display: "block", fontWeight: "bold" }}>
 			Select Hospital Tier
@@ -214,11 +282,14 @@ function App() {
 	</div>
     )}
     <div>
-	<button>
-        <h2>Proceed to Payment</h2>
-	</button>
+	<button onClick={() => nullInputCheck()}>Display Total</button>
     </div>
-    </>
+    <div>
+    {displayTotal && (
+	<h2>Total</h2>
+    )}
+    </div>
+  </>
   );
 }
 

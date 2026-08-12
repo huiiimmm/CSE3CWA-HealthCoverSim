@@ -1,7 +1,6 @@
-// FIX: Link your CSS file right at the top
-import './payment.css'; 
+import './PaymentPage.css';
 
-function Payment() {
+function PaymentPage() {
   return (
     <div className="page-container">
       <h1 className="main-title">Payment procedure page</h1>
@@ -10,4 +9,4 @@ function Payment() {
   );
 }
 
-export default Payment;
+export default PaymentPage;
