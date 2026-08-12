@@ -48,10 +48,6 @@ db.serialize(() => {
 	   ('couple', 2, 0),
 	   ('family', 2, 30);
 
-    CREATE TABLE IF NOT EXISTS lhc_loading(
-      cover_history TEXT,
-      lhc_loading FLOAT
-    );
     CREATE TABLE IF NOT EXISTS user_selections (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	customer_name TEXT NOT NULL,
