@@ -106,6 +106,20 @@ app.post("/save-record", (req, res) => {
 	console.error("Database tracking failure:", error);
 	return res.status(500).json({ error: "failed to save data" });
   }
-  res.status(200).json({ message: "policy saved successfully!", id: this.lastID });
+  res.status(200).json({ 
+	message: "policy saved successfully!", 
+	record: {
+	  id: this.lastID, 
+	  customerName,
+          selectedFamilyCoverage,
+          applicant1Age,
+          applicant1CoverHistory,
+          applicant2Age,
+          applicant2CoverHistory,
+          selectedHospitalTier,
+          selectedExtraTier,
+          selectedPaymentFrequency
+	}
+	});
   });
 });

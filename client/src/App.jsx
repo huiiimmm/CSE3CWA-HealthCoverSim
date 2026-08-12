@@ -21,6 +21,7 @@ function App() {
   const [notes, setNotes] = useState("");
 
   const [displayTotal, setDisplayTotal] = useState(false);
+  const [currentLog, setCurrentLog] = useState([]);
 
   const nullInputCheck = () => { 
   // null checks
@@ -62,7 +63,6 @@ function App() {
 	  selectedExtraTier: selectedExtraTier,
 	  selectedPaymentFrequency: selectedPaymentFrequency
 	};
-
 	fetch("/api/save-record", {
 	  method: "POST",
 	  headers: {
@@ -78,6 +78,9 @@ function App() {
 		})
 		.then((data) => {
 		  console.log("log recording successful:", data);
+		  setCurrentLog((prev) => [
+			...prev,
+			data.record]);
 		  setDisplayTotal(true);
 		})
 		.catch((error) => {	
@@ -85,6 +88,72 @@ function App() {
 		});
 	};
   
+  const calculateCost = (record) => {
+    const hospitalCover = hospital_tiers.find(
+	(tier) => tier.hospital_cover?.toLowerCase() === record.selectedHospitalTier?.toLowerCase()
+    );
+    
+    const extraCover = extra_tiers.find(
+	(tier) => tier.extras_cover?.toLowerCase() === record.selectedExtraTier?.toLowerCase()
+    );
+
+    const familyCover = family_coverage.find(
+	(tier) => tier.cover_type?.toLowerCase()  === record.selectedFamilyCoverage?.toLowerCase()
+    );
+  console.log("Record:", record);
+  console.log("Hospital:", hospitalCover);
+  console.log("Extra:", extraCover);
+  console.log("Family:", familyCover);
+
+    if (!hospitalCover || !extraCover || !familyCover) {
+	    console.error("Could not find one of the selected tiers");
+	return 0;
+    }
+
+    const adultCount = record.selectedFamilyCoverage === "family" || record.selectedFamilyCoverage === "couple" ? 2 : 1;
+    let applicant1Loading = 0;
+
+    if (
+	(record.applicant1CoverHistory?.toLowerCase() === "no" || record.applicant1CoverHistory?.toLowerCase() === "not sure") &&
+	Number(record.applicant1Age) > 30
+    ) {
+	applicant1Loading = (Number(record.applicant1Age) - 30) * 0.02;
+    }
+    let applicant2Loading = 0;
+    if (
+	adultCount === 2 &&
+	(record.applicant2CoverHistory?.toLowerCase() === "no" || record.applicant2CoverHistory?.toLowerCase() === "not sure") &&
+	Number(record.applicant2Age) > 30
+    ) {
+	applicant2Loading = (Number(record.applicant2Age) - 30) * 0.02;
+    }
+    const applicant1HospitalCover = hospitalCover.pp_adult * (1 + applicant1Loading);
+    const applicant2HospitalCover = adultCount === 2 ? hospitalCover.pp_adult * (1 + applicant2Loading) : 0;
+
+    const hospitalCoverTotal = applicant1HospitalCover + applicant2HospitalCover;
+    const extraCoverTotal = extraCover.pp_adult * adultCount;
+    const familyCoverTotal = familyCover.upgrade_fee || 0;
+    const monthlyPremium = hospitalCoverTotal + extraCoverTotal + familyCoverTotal;
+
+    let finalTotal = monthlyPremium;
+    switch (record.selectedPaymentFrequency?.toLowerCase()) {
+	case "yearly":
+	  finalTotal = monthlyPremium * 12 * 0.95;
+	  break;
+	
+	case "monthly":
+	  finalTotal = monthlyPremium;
+	  break;
+
+	default:
+	  finalTotal = monthlyPremium;
+    }
+  console.log("Monthly premium:", monthlyPremium);
+  console.log("Final total:", finalTotal);
+    return finalTotal;
+    };
+
+  const totalCost = currentLog.reduce((total, record) => total + calculateCost(record), 0);
 
   useEffect(() => {
     if (!isSystemReady) return;
@@ -100,7 +169,8 @@ function App() {
                 })
                 .catch((error) => {
                   console.error("fetch error:", error);
-                  setHospital_tiers([]);
+         
+         setHospital_tiers([]);
                 });
 
     fetch("/api/extra_tiers")
@@ -111,11 +181,25 @@ function App() {
           return res.json();
           })
           .then((data) => {
-                setHospital_tiers(Array.isArray(data) ? data : []);
+                setExtra_tiers(Array.isArray(data) ? data : []);
                 })
                 .catch((error) => {
                   console.error("fetch error:", error);
                   setExtra_tiers([]);
+                });
+    fetch("/api/family_coverage")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error, status: ${res.status}`);
+          }
+          return res.json();
+          })
+          .then((data) => {
+                setFamily_coverage(Array.isArray(data) ? data : []);
+                })
+                .catch((error) => {
+                  console.error("fetch error:", error);
+                  setFamily_coverage([]);
                 });
         
 
@@ -304,7 +388,49 @@ function App() {
     </div>
     <div>
     {displayTotal && (
+	<>
 	<h2>Total</h2>
+	<table>
+  <thead>
+    <tr>
+      <th>Customer</th>
+      <th>Family Coverage</th>
+      <th>Applicant 1 Age</th>
+      <th>Applicant 1 History</th>
+      <th>Applicant 2 Age</th>
+      <th>Applicant 2 History</th>
+      <th>Hospital</th>
+      <th>Extras</th>
+      <th>Payment Frequency</th>
+      <th>Cost</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {currentLog.map((record) => (
+      <tr key={record.id}>
+        <td>{record.customerName}</td>
+        <td>{record.selectedFamilyCoverage}</td>
+        <td>{record.applicant1Age}</td>
+        <td>{record.applicant1CoverHistory}</td>
+        <td>{record.applicant2Age || "-"}</td>
+        <td>{record.applicant2CoverHistory || "-"}</td>
+        <td>{record.selectedHospitalTier}</td>
+        <td>{record.selectedExtraTier}</td>
+        <td>{record.selectedPaymentFrequency}</td>
+        <td>${calculateCost(record).toFixed(2)}</td>
+      </tr>
+    ))}
+  </tbody>
+  <tfoot>
+  <tr>
+    <th colSpan="9">Total</th>
+    <th>${totalCost.toFixed(2)}</th>
+  </tr>
+</tfoot>
+
+</table>
+	</>
     )}
     </div>
   </>
@@ -316,4 +442,5 @@ function App() {
 
 
 export default App;
+
 
