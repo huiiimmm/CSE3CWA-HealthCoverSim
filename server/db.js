@@ -68,7 +68,7 @@ db.serialize(() => {
 
     `, (e) => {
 	if (e) console.error("Databse Initialization failed: ", e.message);
-});
+  });
 });
 
 module.exports = db;

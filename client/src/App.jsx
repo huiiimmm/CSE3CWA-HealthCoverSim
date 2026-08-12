@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import { calculateCost, calculateCostDetails } from "./calculateCostDetails";
 
 function App() {
+  const navigate = useNavigate();
+
   const [isSystemReady, setIsSystemReady] = useState(false);
 
   const [hospital_tiers, setHospital_tiers] = useState([]);
@@ -75,7 +79,9 @@ function App() {
     }
 
     if (trimmedName.length > 100) {
-      setValidationMessage("Customer name must be 100 characters or fewer.");
+      setValidationMessage(
+        "Customer name must be 100 characters or fewer."
+      );
       return;
     }
 
@@ -90,27 +96,37 @@ function App() {
     }
 
     if (!applicant1CoverHistory) {
-      setValidationMessage("Please select Applicant 1's cover history.");
+      setValidationMessage(
+        "Please select Applicant 1's cover history."
+      );
       return;
     }
 
     if (!selectedFamilyCoverage) {
-      setValidationMessage("Please select a family coverage option.");
+      setValidationMessage(
+        "Please select a family coverage option."
+      );
       return;
     }
 
     if (!selectedHospitalTier) {
-      setValidationMessage("Please select a hospital cover tier.");
+      setValidationMessage(
+        "Please select a hospital cover tier."
+      );
       return;
     }
 
     if (!selectedExtraTier) {
-      setValidationMessage("Please select an extras cover tier.");
+      setValidationMessage(
+        "Please select an extras cover tier."
+      );
       return;
     }
 
     if (!selectedPaymentFrequency) {
-      setValidationMessage("Please select a payment frequency.");
+      setValidationMessage(
+        "Please select a payment frequency."
+      );
       return;
     }
 
@@ -126,7 +142,9 @@ function App() {
       }
 
       if (!applicant2CoverHistory) {
-        setValidationMessage("Please select Applicant 2's cover history.");
+        setValidationMessage(
+          "Please select Applicant 2's cover history."
+        );
         return;
       }
     }
@@ -137,15 +155,24 @@ function App() {
   const recordCustomerLog = () => {
     const customerLogData = {
       customerName: customerName.trim(),
-      selectedFamilyCoverage: selectedFamilyCoverage.trim().toLowerCase(),
+
+      selectedFamilyCoverage:
+        selectedFamilyCoverage.trim().toLowerCase(),
+
       applicant1Age: Number(applicant1Age),
-      applicant1CoverHistory: applicant1CoverHistory.toLowerCase(),
+
+      applicant1CoverHistory:
+        applicant1CoverHistory.toLowerCase(),
+
       applicant2Age: isTwoAdultCover ? Number(applicant2Age) : "",
-      applicant2CoverHistory: isTwoAdultCover
-        ? applicant2CoverHistory.toLowerCase()
-        : "",
-      selectedHospitalTier: selectedHospitalTier.trim(),
-      selectedExtraTier: selectedExtraTier.trim(),
+        applicant2CoverHistory: isTwoAdultCover ? applicant2CoverHistory.toLowerCase() : "",
+ 
+      selectedHospitalTier:
+        selectedHospitalTier.trim(),
+ 
+     selectedExtraTier:
+        selectedExtraTier.trim(),
+
       selectedPaymentFrequency:
         selectedPaymentFrequency.trim().toLowerCase(),
     };
@@ -168,148 +195,73 @@ function App() {
       })
       .then((data) => {
         if (!data.record) {
-          throw new Error("Backend did not return a record.");
+          throw new Error(
+            "Backend did not return a record."
+          );
         }
 
-        setCurrentLog((prev) => [...prev, data.record]);
+        setCurrentLog((prev) => [
+          ...prev,
+          data.record,
+        ]);
+
         setDisplayTotal(true);
         setValidationMessage("");
       })
       .catch((error) => {
-        console.error("Failed to save log:", error);
+        console.error(
+          "Failed to save log:",
+          error
+        );
+
         setValidationMessage(
           "Unable to save the customer record. Please try again."
         );
       });
   };
 
-  const calculateCostDetails = (record) => {
-    const hospitalCover = hospital_tiers.find(
-      (tier) =>
-        tier.hospital_cover?.toLowerCase() ===
-        record.selectedHospitalTier?.toLowerCase()
-    );
+  const getCalculationRecord = (record) => ({
+    ...record,
 
-    const extraCover = extra_tiers.find(
-      (tier) =>
-        tier.extras_cover?.toLowerCase() ===
-        record.selectedExtraTier?.toLowerCase()
-    );
+    selectedFamilyCoverage:
+      record.cover_type ?? record.selectedFamilyCoverage,
 
-    const familyCover = family_coverage.find(
-      (tier) =>
-        tier.cover_type?.toLowerCase() ===
-        record.selectedFamilyCoverage?.toLowerCase()
-    );
+    applicant1Age:
+      record.applicant1_age ?? record.applicant1Age,
 
-    if (!hospitalCover || !extraCover || !familyCover) {
-      return {
-        applicant1Base: 0,
-        applicant1Loading: 0,
-        applicant1Total: 0,
-        applicant2Base: 0,
-        applicant2Loading: 0,
-        applicant2Total: 0,
-        hospitalTotal: 0,
-        extrasTotal: 0,
-        familyFee: 0,
-        monthlyPremium: 0,
-        discount: 0,
-        finalTotal: 0,
-        adultCount: 1,
-      };
-    }
+    applicant1CoverHistory:
+      record.applicant_1_cover_history ?? record.applicant1CoverHistory,
 
-    const adultCount =
-      record.selectedFamilyCoverage === "family" ||
-      record.selectedFamilyCoverage === "couple"
-        ? 2
-        : 1;
+    applicant2Age:
+      record.applicant_2_age ?? record.applicant2Age,
 
-    let applicant1Loading = 0;
+    applicant2CoverHistory:
+      record.applicant_2_cover_history ?? record.applicant2CoverHistory,
 
-    if (
-      ["no", "not sure"].includes(
-        record.applicant1CoverHistory?.toLowerCase()
-      ) &&
-      Number(record.applicant1Age) > 30
-    ) {
-      applicant1Loading =
-        (Number(record.applicant1Age) - 30) * 0.02;
-    }
+    selectedHospitalTier:
+      record.hospital_cover ?? record.selectedHospitalTier,
 
-    let applicant2Loading = 0;
+    selectedExtraTier:
+      record.extras_cover ?? record.selectedExtraTier,
 
-    if (
-      adultCount === 2 &&
-      ["no", "not sure"].includes(
-        record.applicant2CoverHistory?.toLowerCase()
-      ) &&
-      Number(record.applicant2Age) > 30
-    ) {
-      applicant2Loading =
-        (Number(record.applicant2Age) - 30) * 0.02;
-    }
-
-    const applicant1Base = Number(hospitalCover.pp_adult);
-    const applicant2Base =
-      adultCount === 2 ? Number(hospitalCover.pp_adult) : 0;
-
-    const applicant1Total =
-      applicant1Base * (1 + applicant1Loading);
-
-    const applicant2Total =
-      adultCount === 2
-        ? applicant2Base * (1 + applicant2Loading)
-        : 0;
-
-    const hospitalTotal =
-      applicant1Total + applicant2Total;
-
-    const extrasTotal =
-      Number(extraCover.pp_adult) * adultCount;
-
-    const familyFee =
-      Number(familyCover.upgrade_fee) || 0;
-
-    const monthlyPremium =
-      hospitalTotal +
-      extrasTotal +
-      familyFee;
-
-    const discount =
-      record.selectedPaymentFrequency?.toLowerCase() === "yearly"
-        ? monthlyPremium * 12 * 0.05
-        : 0;
-
-    const finalTotal =
-      record.selectedPaymentFrequency?.toLowerCase() === "yearly"
-        ? monthlyPremium * 12 - discount
-        : monthlyPremium;
-
-    return {
-      applicant1Base,
-      applicant1Loading,
-      applicant1Total,
-      applicant2Base,
-      applicant2Loading,
-      applicant2Total,
-      hospitalTotal,
-      extrasTotal,
-      familyFee,
-      monthlyPremium,
-      discount,
-      finalTotal,
-      adultCount,
-    };
-  };
-
-  const calculateCost = (record) => {
-    return calculateCostDetails(record).finalTotal;
-  };
+    selectedPaymentFrequency:
+      record.payment_frequency ?? record.selectedPaymentFrequency,
+  });
 
   const totalCost = currentLog.reduce(
-    (total, record) => total + calculateCost(record),
+    (total, record) => {
+      const calculationRecord =
+        getCalculationRecord(record);
+
+      const calculation = calculateCostDetails(
+        calculationRecord,
+        hospital_tiers,
+        extra_tiers,
+        family_coverage
+      );
+
+      return total + calculation.finalTotal;
+    },
     0
   );
 
@@ -333,7 +285,9 @@ function App() {
           !extrasResponse.ok ||
           !familyResponse.ok
         ) {
-          throw new Error("Failed to load cover data.");
+          throw new Error(
+            "Failed to load cover data."
+          );
         }
 
         const [
@@ -347,21 +301,32 @@ function App() {
         ]);
 
         setHospital_tiers(
-          Array.isArray(hospitalData) ? hospitalData : []
+          Array.isArray(hospitalData)
+            ? hospitalData
+            : []
         );
 
         setExtra_tiers(
-          Array.isArray(extrasData) ? extrasData : []
+          Array.isArray(extrasData)
+            ? extrasData
+            : []
         );
 
         setFamily_coverage(
-          Array.isArray(familyData) ? familyData : []
+          Array.isArray(familyData)
+            ? familyData
+            : []
         );
       } catch (error) {
-        console.error("Failed to load cover data:", error);
+        console.error(
+          "Failed to load cover data:",
+          error
+        );
+
         setHospital_tiers([]);
         setExtra_tiers([]);
         setFamily_coverage([]);
+
         setValidationMessage(
           "Unable to load cover options. Please refresh and try again."
         );
@@ -380,8 +345,7 @@ function App() {
 
         body {
           margin: 0;
-          font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
-            "Segoe UI", sans-serif;
+          font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           background: #f3f6fa;
           color: #172033;
         }
@@ -398,7 +362,11 @@ function App() {
           align-items: center;
           gap: 18px;
           padding: 24px;
-          background: linear-gradient(135deg, #eef5ff, #f7f9fc);
+          background: linear-gradient(
+            135deg,
+            #eef5ff,
+            #f7f9fc
+          );
         }
 
         .boot-screen h2 {
@@ -443,7 +411,10 @@ function App() {
 
         .form-grid {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(
+            2,
+            minmax(0, 1fr)
+          );
           gap: 20px;
         }
 
@@ -472,7 +443,9 @@ function App() {
           background: white;
           color: #172033;
           font-size: 0.95rem;
-          transition: border-color 0.15s, box-shadow 0.15s;
+          transition:
+            border-color 0.15s,
+            box-shadow 0.15s;
         }
 
         input:focus,
@@ -507,7 +480,9 @@ function App() {
           color: white;
           font-weight: 700;
           cursor: pointer;
-          transition: background 0.15s, transform 0.15s;
+          transition:
+            background 0.15s,
+            transform 0.15s;
         }
 
         button:hover {
@@ -653,25 +628,27 @@ function App() {
       {!isSystemReady ? (
         <div className="boot-screen">
           <h2>Systems Initializing...</h2>
+
           <button onClick={() => setIsSystemReady(true)}>
             Connect & Load Data
           </button>
+
         </div>
       ) : (
         <main className="container">
           <header className="header">
             <h1>Health Cover Sim</h1>
-            <p>Enter customer details and select the required cover.</p>
-          </header>
+            <p>
+              Enter customer details and select the required cover.
+            </p>
 
+          </header>
           <section className="card">
             <h2>Customer Details</h2>
 
             <div className="form-grid">
               <div className="field full">
-                <label htmlFor="customername">
-                  Customer Name
-                </label>
+                <label htmlFor="customername">Customer Name</label>
 
                 <input
                   type="text"
@@ -682,75 +659,73 @@ function App() {
                   maxLength={100}
                   autoComplete="name"
                   onChange={(e) =>
-                    setCustomerName(e.target.value)
+                    setCustomerName(
+                      e.target.value
+                    )
                   }
                 />
 
-                <span className="hint">
-                  Maximum 100 characters.
-                </span>
+                <span className="hint">Maximum 100 characters.</span>
               </div>
 
               <div className="field">
-                <label htmlFor="family-cover-select">
-                  Family Cover
-                </label>
+                <label htmlFor="family-cover-select">Family Cover</label>
 
                 <select
                   id="family-cover-select"
                   value={selectedFamilyCoverage}
                   onChange={(e) => {
-                    setSelectedFamilyCoverage(e.target.value);
+                    setSelectedFamilyCoverage(
+                      e.target.value
+                    );
 
-                    if (
-                      !["couple", "family"].includes(
-                        e.target.value.toLowerCase()
-                      )
-                    ) {
+                    if (!["couple", "family",].includes(e.target.value.toLowerCase())) {
                       setApplicant2Age("");
                       setApplicant2CoverHistory("");
                     }
                   }}
                 >
-                  <option value="">
-                    -- Choose a Family Tier --
-                  </option>
+                  <option value="">-- Choose a Family Tier --</option>
 
-                  {family_coverage.map((tier, index) => (
-                    <option
-                      key={index}
-                      value={tier.cover_type}
-                    >
-                      {tier.cover_type} ({tier.adults_count} adults,
-                      {" "}
-                      ${tier.upgrade_fee} extra monthly fee)
-                    </option>
-                  ))}
+                  {family_coverage.map(
+                    (tier, index) => (
+                      <option
+                        key={index}
+                        value={tier.cover_type}
+                      >
+                        {tier.cover_type} (
+                        {tier.adults_count} adults, $
+                        {tier.upgrade_fee} extra
+                        monthly fee)
+                      </option>
+                    )
+                  )}
                 </select>
-              </div>
 
+              </div>
               <div className="field">
-                <label htmlFor="payment-frequency-select">
-                  Payment Frequency
-                </label>
+                <label htmlFor="payment-frequency-select">Payment Frequency</label>
 
                 <select
                   id="payment-frequency-select"
                   value={selectedPaymentFrequency}
                   onChange={(e) =>
-                    setSelectedPaymentFrequency(e.target.value)
+                    setSelectedPaymentFrequency(
+                      e.target.value
+                    )
                   }
                 >
-                  <option value="">
-                    -- Choose a Frequency Option --
-                  </option>
+                  <option value="">-- Choose a Frequency Option --</option>
+
                   <option value="monthly">Monthly</option>
+
                   <option value="yearly">Yearly</option>
                 </select>
 
                 {selectedPaymentFrequency === "yearly" && (
                   <span className="hint">
-                    Yearly payments receive a 5% discount.
+                    Yearly payments receive a 5%
+                    discount.
                   </span>
                 )}
               </div>
@@ -783,43 +758,40 @@ function App() {
                     )
                   }
                 />
-
-                <span className="hint">
-                  Must be between 18 and 100.
-                </span>
+                <span className="hint">Must be between 18 and 100.</span>
               </div>
 
               <div className="field">
-                <label htmlFor="applicant1coverhistory">
-                  Applicant 1 Cover History
-                </label>
+                <label htmlFor="applicant1coverhistory">Applicant 1 Cover History</label>
 
                 <select
                   id="applicant1coverhistory"
                   value={applicant1CoverHistory}
                   onChange={(e) =>
-                    setApplicant1CoverHistory(e.target.value)
+                    setApplicant1CoverHistory(
+                      e.target.value
+                    )
                   }
                 >
-                  <option value="">
-                    -- Select Cover History --
-                  </option>
+                  <option value="">-- Select Cover History --</option>
+
                   <option value="yes">Yes</option>
+
                   <option value="no">No</option>
+
                   <option value="not sure">Not sure</option>
                 </select>
-                <span className="hint">
-                  Lifetime Health Cover loading applies to people over the age of 30, and only to hospital cover. It does not apply to extras cover. 
-                </span>
 
+                <span className="hint">
+                  Lifetime Health Cover loading applies to people over the age of
+                  30, and only to hospital cover. It does not apply to extras cover.
+                </span>
               </div>
 
               {isTwoAdultCover && (
                 <>
                   <div className="field">
-                    <label htmlFor="applicant2age">
-                      Applicant 2 Age
-                    </label>
+                    <label htmlFor="applicant2age">Applicant 2 Age</label>
 
                     <input
                       type="number"
@@ -831,36 +803,31 @@ function App() {
                       inputMode="numeric"
                       placeholder="18-100"
                       value={applicant2Age}
-                      onChange={(e) =>
-                        handleAgeChange(
+                      onChange={(e) => handleAgeChange(
                           e.target.value,
                           setApplicant2Age
                         )
                       }
                     />
 
-                    <span className="hint">
-                      Must be between 18 and 100.
-                    </span>
+                    <span className="hint">Must be between 18 and 100.</span>
                   </div>
 
                   <div className="field">
-                    <label htmlFor="applicant2coverhistory">
-                      Applicant 2 Cover History
-                    </label>
+                    <label htmlFor="applicant2coverhistory">Applicant 2 Cover History</label>
 
                     <select
                       id="applicant2coverhistory"
                       value={applicant2CoverHistory}
-                      onChange={(e) =>
-                        setApplicant2CoverHistory(e.target.value)
+                      onChange={(e) => setApplicant2CoverHistory(e.target.value)
                       }
                     >
-                      <option value="">
-                        -- Select Cover History --
-                      </option>
+                      <option value="">-- Select Cover History --</option>
+
                       <option value="yes">Yes</option>
+
                       <option value="no">No</option>
+
                       <option value="not sure">Not sure</option>
                     </select>
                   </div>
@@ -874,67 +841,64 @@ function App() {
 
             <div className="form-grid">
               <div className="field">
-                <label htmlFor="hospital-cover-select">
-                  Hospital Cover
-                </label>
+                <label htmlFor="hospital-cover-select">Hospital Cover</label>
 
                 <select
                   id="hospital-cover-select"
                   value={selectedHospitalTier}
-                  onChange={(e) =>
-                    setSelectedHospitalTier(e.target.value)
+                  onChange={(e) => setSelectedHospitalTier(e.target.value)
                   }
                 >
-                  <option value="">
-                    -- Choose a Hospital Tier --
-                  </option>
+                  <option value="">-- Choose a Hospital Tier --</option>
 
-                  {hospital_tiers.map((tier, index) => (
-                    <option
-                      key={index}
-                      value={tier.hospital_cover}
-                    >
-                      {tier.hospital_cover} (${tier.pp_adult}/adult)
-                    </option>
-                  ))}
+                  {hospital_tiers.map(
+                    (tier, index) => (
+                      <option
+                        key={index}
+                        value={tier.hospital_cover}
+                      >
+                        {tier.hospital_cover} ($
+                        {tier.pp_adult}/adult)
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
 
               <div className="field">
-                <label htmlFor="extra-cover-select">
-                  Extras Cover
-                </label>
+                <label htmlFor="extra-cover-select">Extras Cover</label>
 
                 <select
                   id="extra-cover-select"
                   value={selectedExtraTier}
-                  onChange={(e) =>
-                    setSelectedExtraTier(e.target.value)
+                  onChange={(e) => setSelectedExtraTier(e.target.value)
                   }
                 >
-                  <option value="">
-                    -- Choose an Extras Tier --
-                  </option>
+                  <option value="">-- Choose an Extras Tier --</option>
 
-                  {extra_tiers.map((tier, index) => (
-                    <option
-                      key={index}
-                      value={tier.extras_cover}
-                    >
-                      {tier.extras_cover} (${tier.pp_adult}/adult)
-                    </option>
-                  ))}
+                  {extra_tiers.map(
+                    (tier, index) => (
+                      <option
+                        key={index}
+                        value={tier.extras_cover}
+                      >
+                        {tier.extras_cover} ($
+                        {tier.pp_adult}/adult)
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
             </div>
 
             <div className="actions">
-              <button onClick={nullInputCheck}>
-                Display Total
-              </button>
+              <button onClick={nullInputCheck}>Display Total</button>
 
               {validationMessage && (
-                <p className="error" role="alert">
+                <p
+                  className="error"
+                  role="alert"
+                >
                   {validationMessage}
                 </p>
               )}
@@ -963,209 +927,217 @@ function App() {
                   </thead>
 
                   <tbody>
-                    {currentLog.map((record, index) => (
-                      <tr key={record.id ?? index}>
-                        <td>{record.customerName}</td>
-                        <td>{record.selectedFamilyCoverage}</td>
-                        <td>{record.applicant1Age}</td>
-                        <td>{record.applicant1CoverHistory}</td>
-                        <td>{record.applicant2Age || "-"}</td>
-                        <td>{record.applicant2CoverHistory || "-"}</td>
-                        <td>{record.selectedHospitalTier}</td>
-                        <td>{record.selectedExtraTier}</td>
-                        <td>{record.selectedPaymentFrequency}</td>
-                        <td>${calculateCost(record).toFixed(2)}</td>
-                      </tr>
-                    ))}
+                    {currentLog.map(
+                      (record, index) => {
+                        const calculationRecord = getCalculationRecord(record);
+
+                        const calculation =
+                          calculateCostDetails(
+                            calculationRecord,
+                            hospital_tiers,
+                            extra_tiers,
+                            family_coverage
+                          );
+
+                        return (
+                          <tr
+                            key={
+                              record.id ?? index
+                            }
+                          >
+                            <td>{record.customer_name}</td>
+
+                            <td>{record.cover_type}</td>
+
+                            <td>{record.applicant1_age}</td>
+
+                            <td>{record.applicant_1_cover_history}</td>
+
+                            <td>{record.applicant_2_age ?? "N/A"}</td>
+
+                            <td>{record.applicant_2_cover_history ?? "N/A"}</td>
+
+                            <td>{record.hospital_cover}</td>
+
+                            <td>{record.extras_cover}</td>
+
+                            <td>{record.payment_frequency}</td>
+
+                            <td>${calculation.finalTotal.toFixed(2)}</td>
+                          </tr>
+                        );
+                      }
+                    )}
                   </tbody>
 
                   <tfoot>
                     <tr>
                       <th colSpan="9">Total</th>
-                      <th className="total">
-                        ${totalCost.toFixed(2)}
-                      </th>
+
+                      <th className="total">${totalCost.toFixed(2)}</th>
                     </tr>
                   </tfoot>
                 </table>
               </div>
 
-              {currentLog.map((record, index) => {
-                const calculation = calculateCostDetails(record);
+              {currentLog.map(
+                (record, index) => {
+                  const calculationRecord =
+                    getCalculationRecord(
+                      record
+                    );
 
-                return (
-                  <div
-                    className="calculation"
-                    key={`calculation-${record.id ?? index}`}
-                  >
-                    <h3>
-                      Calculation for {record.customerName}
-                    </h3>
+                  const calculation =
+                    calculateCostDetails(
+                      calculationRecord,
+                      hospital_tiers,
+                      extra_tiers,
+                      family_coverage
+                    );
 
-                    <div className="calculation-row">
-                      <span className="calculation-label">
-                        Applicant 1 hospital cover
-                      </span>
-                      <span className="calculation-value">
-                        ${calculation.applicant1Base.toFixed(2)}
-                      </span>
-                    </div>
+                  return (
+                    <div
+                      className="calculation"
+                      key={`calculation-${record.id ?? index}`}
+                    >
+                      <h3>
+                        Calculation for{" "}
+                        {record.customer_name}
+                      </h3>
 
-                    {calculation.applicant1Loading > 0 && (
                       <div className="calculation-row">
-                        <span className="calculation-label">
-                          Applicant 1 age loading
-                        </span>
-                        <span className="calculation-value">
-                          +{(calculation.applicant1Loading * 100).toFixed(0)}%
-                          {" "}
-                          ($
-                          {(
-                            calculation.applicant1Total -
-                            calculation.applicant1Base
-                          ).toFixed(2)}
-                          )
-                        </span>
+                        <span className="calculation-label">Applicant 1 hospital cover</span>
+
+                        <span className="calculation-value">${calculation.applicant1Base.toFixed(2)}</span>
                       </div>
-                    )}
 
-                    <div className="calculation-row">
-                      <span className="calculation-label">
-                        Applicant 1 total
-                      </span>
-                      <span className="calculation-value">
-                        ${calculation.applicant1Total.toFixed(2)}
-                      </span>
-                    </div>
+                      {calculation.applicant1Loading >
+                        0 && (
 
-                    {calculation.adultCount === 2 && (
-                      <>
                         <div className="calculation-row">
-                          <span className="calculation-label">
-                            Applicant 2 hospital cover
-                          </span>
-                          <span className="calculation-value">
-                            ${calculation.applicant2Base.toFixed(2)}
+                          <span className="calculation-label">Applicant 1 age loading</span>
+
+                          <span className="calculation-value">+{(calculation.applicant1Loading * 100).toFixed(0)}% 
+			   ($
+                            {(
+                              calculation.applicant1Total - calculation.applicant1Base).toFixed(2)}
+                            )
                           </span>
                         </div>
+                      )}
 
-                        {calculation.applicant2Loading > 0 && (
+                      <div className="calculation-row">
+                        <span className="calculation-label">Applicant 1 total</span>
+
+                        <span className="calculation-value">${calculation.applicant1Total.toFixed(2)}</span>
+                      </div>
+
+                      {calculation.adultCount ===2 && (
+                        <>
+                          <div className="calculation-row">
+                            <span className="calculation-label">Applicant 2 hospital cover</span>
+
+                            <span className="calculation-value">${calculation.applicant2Base.toFixed(2)}</span>
+                          </div>
+
+                          {calculation.applicant2Loading >
+                            0 && (
+                            <div className="calculation-row">
+                              <span className="calculation-label">Applicant 2 age loading</span>
+
+                              <span className="calculation-value">+{(calculation.applicant2Loading * 100).toFixed(0)}
+                                % ($
+                                {(calculation.applicant2Total - calculation.applicant2Base).toFixed(2)}
+                                )
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="calculation-row">
+                            <span className="calculation-label">Applicant 2 total</span>
+
+                            <span className="calculation-value">${calculation.applicant2Total.toFixed(2)}</span>
+                          </div>
+                        </>
+                      )}
+
+                      <div className="calculation-row">
+                        <span className="calculation-label">Hospital cover total</span>
+
+                        <span className="calculation-value">${calculation.hospitalTotal.toFixed(2)}</span>
+                      </div>
+
+                      <div className="calculation-row">
+                        <span className="calculation-label">Extras cover</span>
+
+                        <span className="calculation-value">${calculation.extrasTotal.toFixed(2)}</span>
+                      </div>
+
+                      <div className="calculation-row">
+                        <span className="calculation-label">Family coverage fee</span>
+
+                        <span className="calculation-value">${calculation.familyFee.toFixed(2)}</span>
+                      </div>
+
+                      <div className="calculation-row">
+                        <span className="calculation-label">Monthly premium</span>
+
+                        <span className="calculation-value">${calculation.monthlyPremium.toFixed(2)}</span>
+                      </div>
+
+                      <div className="formula">
+                        Hospital (${calculation.hospitalTotal.toFixed(2)}) + 
+			Extras (${calculation.extrasTotal.toFixed(2)}) + 
+			Family fee (${calculation.familyFee.toFixed(2)}) 
+			
+			= Monthly premium (${calculation.monthlyPremium.toFixed(2)})
+                      </div>
+
+                      {calculationRecord.selectedPaymentFrequency ===
+                        "yearly" && (
+                        <>
                           <div className="calculation-row">
                             <span className="calculation-label">
-                              Applicant 2 age loading
+                              Annual price before discount
                             </span>
+
                             <span className="calculation-value">
-                              +
-                              {(calculation.applicant2Loading * 100).toFixed(0)}
-                              %
-                              {" "}
-                              ($
-                              {(
-                                calculation.applicant2Total -
-                                calculation.applicant2Base
-                              ).toFixed(2)}
-                              )
+			      ${(calculation.monthlyPremium * 12).toFixed(2)}
                             </span>
                           </div>
-                        )}
 
-                        <div className="calculation-row">
-                          <span className="calculation-label">
-                            Applicant 2 total
-                          </span>
-                          <span className="calculation-value">
-                            ${calculation.applicant2Total.toFixed(2)}
-                          </span>
-                        </div>
-                      </>
-                    )}
+                          <div className="calculation-row">
+                            <span className="calculation-label">5% annual discount</span>
 
-                    <div className="calculation-row">
-                      <span className="calculation-label">
-                        Hospital cover total
-                      </span>
-                      <span className="calculation-value">
-                        ${calculation.hospitalTotal.toFixed(2)}
-                      </span>
+                            <span className="calculation-value">
+                              -${calculation.discount.toFixed(2)}
+                            </span>
+                          </div>
+
+                          <div className="formula">
+                            (${calculation.monthlyPremium.toFixed(2)} × 12) − 
+			     ${calculation.discount.toFixed(2)} = 
+			     ${calculation.finalTotal.toFixed(2)}
+                          </div>
+                        </>
+                      )}
+
+                      <div className="calculation-row calculation-total">
+                        <span>
+                          Final{" "}
+                          {calculationRecord.selectedPaymentFrequency}
+			  {" "}
+                          cost
+                        </span>
+
+                        <span>${calculation.finalTotal.toFixed(2)}</span>
+                      </div>
+
+                      <button onClick={() => navigate("/quote-list")}>See All Quotes</button>
                     </div>
-
-                    <div className="calculation-row">
-                      <span className="calculation-label">
-                        Extras cover
-                      </span>
-                      <span className="calculation-value">
-                        ${calculation.extrasTotal.toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="calculation-row">
-                      <span className="calculation-label">
-                        Family coverage fee
-                      </span>
-                      <span className="calculation-value">
-                        ${calculation.familyFee.toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="calculation-row">
-                      <span className="calculation-label">
-                        Monthly premium
-                      </span>
-                      <span className="calculation-value">
-                        $
-                        {calculation.monthlyPremium.toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="formula">
-                      Hospital ($
-                      {calculation.hospitalTotal.toFixed(2)}) + Extras ($
-                      {calculation.extrasTotal.toFixed(2)}) + Family fee ($
-                      {calculation.familyFee.toFixed(2)}) = Monthly premium ($
-                      {calculation.monthlyPremium.toFixed(2)})
-                    </div>
-
-                    {record.selectedPaymentFrequency === "yearly" && (
-                      <>
-                        <div className="calculation-row">
-                          <span className="calculation-label">
-                            Annual price before discount
-                          </span>
-                          <span className="calculation-value">
-                            $
-                            {(calculation.monthlyPremium * 12).toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="calculation-row">
-                          <span className="calculation-label">
-                            5% annual discount
-                          </span>
-                          <span className="calculation-value">
-                            -${calculation.discount.toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="formula">
-                          ($
-                          {calculation.monthlyPremium.toFixed(2)} × 12) − $
-                          {calculation.discount.toFixed(2)} = $
-                          {calculation.finalTotal.toFixed(2)}
-                        </div>
-                      </>
-                    )}
-
-                    <div className="calculation-row calculation-total">
-                      <span>
-                        Final {record.selectedPaymentFrequency} cost
-                      </span>
-                      <span>
-                        ${calculation.finalTotal.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
             </section>
           )}
         </main>
@@ -1175,3 +1147,4 @@ function App() {
 }
 
 export default App;
+
