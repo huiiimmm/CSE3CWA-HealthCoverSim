@@ -2,12 +2,10 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
-const PORT = 5000;
+const BACKEND_PORT = 5000;
 
 const db = require("./db");
 
-
-app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -16,8 +14,8 @@ app.get("/", (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+app.listen(BACKEND_PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${BACKEND_PORT}`);
 });
 app.get("/hospital_tiers", (req,res)=>{
 
@@ -73,9 +71,10 @@ app.get("/user_selections", (req,res)=>{
 
 });
 
-app.post("/api/save-record", (req, res) => {
+app.post("/save-record", (req, res) => {
   const {
 	customerName,
+	selectedFamilyCoverage,
 	applicant1Age,
 	applicant1CoverHistory,
 	applicant2Age,
@@ -87,11 +86,12 @@ app.post("/api/save-record", (req, res) => {
   
   const sqlQuery = `
 	INSERT INTO user_selections
-	(customer_name, applicant1_age, applicant_1_cover_history, applicant_2_age, applicant_2_cover_history, hospital_cover, extras_cover, payment_frequency)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	(customer_name, cover_type, applicant1_age, applicant_1_cover_history, applicant_2_age, applicant_2_cover_history, hospital_cover, extras_cover, payment_frequency)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const valuesInput = [
 	customerName,
+	selectedFamilyCoverage,
 	parseInt(applicant1Age, 10),
 	applicant1CoverHistory,
 	applicant2Age === '' ? null : parseInt(applicant2Age, 10),
@@ -101,11 +101,11 @@ app.post("/api/save-record", (req, res) => {
 	selectedPaymentFrequency
   ];
 
-  db.query(sqlQuery, valuesInput, (error, result) => {
+  db.run(sqlQuery, valuesInput, function (error) {
   if (error) {
 	console.error("Database tracking failure:", error);
 	return res.status(500).json({ error: "failed to save data" });
   }
-  res.status(200).json({ message: "policy saved successfully!", id: result.insertId });
+  res.status(200).json({ message: "policy saved successfully!", id: this.lastID });
   });
 });

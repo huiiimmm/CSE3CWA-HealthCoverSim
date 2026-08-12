@@ -1,6 +1,7 @@
 import { useEffect, useState, input } from "react";
 
 function App() {
+  const [isSystemReady, setIsSystemReady] = useState(false);
   const [hospital_tiers, setHospital_tiers] = useState([]);
   const [extra_tiers, setExtra_tiers] = useState([]);
   const [family_coverage, setFamily_coverage] = useState([]);
@@ -51,19 +52,42 @@ function App() {
 
   const recordCustomerLog = () => {
 	const customerLogData = {
-	  name: customerName,
-	  age: applicant1Age,
-	  tier: selectedHospitalTier,
-	  frequency: selectedPaymentFrequency,
-	  timestamp: new Date().toISOString()
+	  customerName: customerName,
+	  selectedFamilyCoverage: selectedFamilyCoverage,
+	  applicant1Age: applicant1Age,
+	  applicant1CoverHistory: applicant1CoverHistory,
+	  applicant2Age: applicant2Age || "",
+	  applicant2CoverHistory: applicant2CoverHistory || "",
+	  selectedHospitalTier: selectedHospitalTier,
+	  selectedExtraTier: selectedExtraTier,
+	  selectedPaymentFrequency: selectedPaymentFrequency
 	};
-	console.log("log recording successful:", recordCustomerLog);
-	
-	setDisplayTotal(true);
-  	return;
-  }
+
+	fetch("/api/save-record", {
+	  method: "POST",
+	  headers: {
+		"Content-Type": "application/json",
+		},
+		body: JSON.stringify(customerLogData),
+		})
+		.then((res) => {
+		  if (!res.ok) {
+			throw new Error(`HTTP backend error, status: ${res.status}`);
+		  }
+		  return res.json();
+		})
+		.then((data) => {
+		  console.log("log recording successful:", data);
+		  setDisplayTotal(true);
+		})
+		.catch((error) => {	
+		  console.error("failed to dave log:", error);
+		});
+	};
+  
 
   useEffect(() => {
+    if (!isSystemReady) return;
     fetch("/api/hospital_tiers")
       .then((res) => {
         if (!res.ok) {
@@ -87,27 +111,13 @@ function App() {
           return res.json();
           })
           .then((data) => {
-                setExtra_tiers(Array.isArray(data) ? data : []);
+                setHospital_tiers(Array.isArray(data) ? data : []);
                 })
                 .catch((error) => {
                   console.error("fetch error:", error);
                   setExtra_tiers([]);
                 });
-
-    fetch("/api/family_coverage")
-      .then((res) => {
-	if (!res.ok) {
-	  throw new Error(`HTTP error, status: ${res.status}`);
-	  }
-	  return res.json();
-	  })
-	  .then((data) => {
-		setFamily_coverage(Array.isArray(data) ? data : []);
-		})
-		.catch((error) => {
-		  console.error("fetch error:", error);
-		  setFamily_coverage([]);
-		}); 
+        
 
     fetch("/api/user_selections")
       .then((res) => {
@@ -123,8 +133,16 @@ function App() {
                   console.error("fetch error:", error);
                   setUser_selections([]);
                 });
-	});
+	}, [isSystemReady]);
   return (
+    <div>
+      {!isSystemReady ? (
+        <div className="boot-screen">
+          <h2>Systems Initializing...</h2>
+          <button onClick={() => setIsSystemReady(true)}>Connect & Load Data</button>
+        </div>
+      ) : (
+    <main>
     <>
     <div>
       <h1>Health Cover Sim Info Page</h1>
@@ -290,8 +308,12 @@ function App() {
     )}
     </div>
   </>
+  </main>
+  )}
+  </div>
   );
 }
+
 
 export default App;
 
