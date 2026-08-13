@@ -631,7 +631,7 @@ function QuoteList() {
 
 			        {calculation.discount > 0 && (
 			          <div className="steps">
-			            <span>Annual discount ({quote.annual_discount * 100}%)</span>
+			            <span>Annual discount ({(quote.annual_discount * 100).toFixed(0)}%)</span>
 			            <span>-${calculation.discount.toFixed(2)}</span>
 			          </div>
 			        )}

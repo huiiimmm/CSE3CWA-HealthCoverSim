@@ -13,7 +13,7 @@ The main uses of generative AI throughout this assignment was:
 I started the project specifically avoiding heavy AI use, in order to keep track of the underlying workflow and system layout. 
 Many of the routing decisions, inlcuding the stripping of /api for backend access was my own choice.
 
--- Launch Instructions --
+-- Launch Instructions/Details --
 
 To launch, you must first ensure that all 3 servers are running.
 
@@ -34,13 +34,18 @@ in the /clinet folder, run the following
 npm run dev
 to run the vite server
 
+-- Database --
+
+All cover SQL tables (hospital, extra, family) are self populated with their respective tiers and pricing,
+whilst the user_selections table is populated through user choices. 
+
 -- URL's --
 
-You may then open the app with the following url,
+You may then open the app with the following url for the frontend:
 
 http://localhost:5173/
 
-For the main page, and
+And the following for the backend:
 
 http://localhost:5000/ -sql table name-
 
