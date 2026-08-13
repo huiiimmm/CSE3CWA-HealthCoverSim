@@ -21,6 +21,7 @@ function App() {
   const [selectedExtraTier, setSelectedExtraTier] = useState("");
   const [selectedFamilyCoverage, setSelectedFamilyCoverage] = useState("");
   const [selectedPaymentFrequency, setSelectedPaymentFrequency] = useState("");
+  const [annualDiscount, setAnnualDiscount] = useState("");
 
   const [displayTotal, setDisplayTotal] = useState(false);
   const [currentLog, setCurrentLog] = useState([]);
@@ -175,6 +176,8 @@ function App() {
 
       selectedPaymentFrequency:
         selectedPaymentFrequency.trim().toLowerCase(),
+
+      annualDiscount: 0.05,
     };
 
     fetch("/api/save-record", {
@@ -1063,7 +1066,7 @@ function App() {
                         = Yearly premium (${(calculation.monthlyPremium * 12).toFixed(2)})
                       </div>
 
-                      {calculation.selectedPaymentFrequency  === "yearly" && (
+                      {record.payment_frequency?.toLowerCase()  === "yearly" && (
                         <>
                           <div className="calculation-row">
                             <span className="calculation-label">5% annual discount</span>
@@ -1084,7 +1087,7 @@ function App() {
                       <div className="calculation-row calculation-total">
                         <span>
                           Final{" "}
-                          {calculation.selectedPaymentFrequency}
+                          {record.payment_frequency}
 			  {" "}
                           cost
                         </span>

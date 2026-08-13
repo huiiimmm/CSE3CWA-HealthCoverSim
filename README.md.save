@@ -6,7 +6,7 @@ The main uses of generative AI throughout this assignment was:
 
 	- Breakdowns of work structure
 	- Education on SQLite, Express and JavaScript syntax
-	- Searching code blocks for syntax errors
+	- Searching for syntax errors
 	- Improving UI 
 	- Debugging
 
@@ -46,19 +46,5 @@ http://localhost:5000/ -sql table name-
 
 For the backend
 
--- Calculation Steps --
+-- Quote Calculation Steps --
 
-All of the calculation steps are located inside calculateCostDetails.js
-
-After ensuring variable names between the front and backend are aligned with the toCalculator record,
-the calculator first finds the specific tiers of the hospital cover, extra cover, and family covers
-to refer to their respective SQL tables and the prices listed inside of them.
-
-It then contains various calculation steps including individual applicant LHC loading, and yearly discounts.
-The steps themselves are mainly for the purposes of rendering calculation steps in the frontend,
-and the finalTotal step is simply where each step aligns into one call. 
-
--- Limitations -- 
-
-A key limitation of the system is the need to have 3 seperate servers to be running in order for it
-to be functional. 

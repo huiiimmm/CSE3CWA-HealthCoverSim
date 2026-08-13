@@ -5,6 +5,8 @@ import { calculateCostDetails, calculateCost, toCalculatorRecord } from "./calcu
 function QuoteList() {
   const navigate = useNavigate();
 
+  const [currentLog, setCurrentLog] = useState([]);
+
   const [quotes, setQuotes] = useState([]);
   const [hospital_tiers, setHospital_tiers] = useState([]);
   const [extra_tiers, setExtra_tiers] = useState([]);
@@ -15,52 +17,49 @@ function QuoteList() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    const loadQuotes = async () => {
-      try {
-        const response = await fetch("/api/user_selections");
-
-        if (!response.ok) {
-          throw new Error(
-            `User selections HTTP error: ${response.status}`
-          );
-        }
-
-        const data = await response.json();
-
-        console.log(
-          "API /api/user_selections response:",
-          data
+  const loadQuotes = async () => {
+    try {
+      const response = await fetch("/api/user_selections");
+      if (!response.ok) {
+        throw new Error(
+          `User selections HTTP error: ${response.status}`
         );
-
-        let records = [];
-
-        if (Array.isArray(data)) {
-          records = data;
-        } else if (Array.isArray(data.user_selections)) {
-          records = data.user_selections;
-        } else if (Array.isArray(data.data)) {
-          records = data.data;
-        } else if (Array.isArray(data.records)) {
-          records = data.records;
-        } else if (Array.isArray(data.quotes)) {
-          records = data.quotes;
-        }
-
-        console.log("Quote records:", records);
-
-        setQuotes(records);
-      } catch (error) {
-        console.error("Failed to load quotes:", error);
-
-        setErrorMessage(
-          "Unable to load quotes from the database."
-        );
-      } finally {
-        setLoading(false);
       }
-    };
 
+      const data = await response.json();
+
+      console.log("API /api/user_selections response:", data);
+
+      let records = [];
+
+      if (Array.isArray(data)) {
+        records = data;
+      } else if (Array.isArray(data.user_selections)) {
+        records = data.user_selections;
+      } else if (Array.isArray(data.data)) {
+        records = data.data;
+      } else if (Array.isArray(data.records)) {
+        records = data.records;
+      } else if (Array.isArray(data.quotes)) {
+        records = data.quotes;
+      }
+
+      console.log("Quote records:", records);
+
+      setQuotes(records);
+    } catch (error) {
+      console.error("Failed to load quotes:", error);
+
+      setErrorMessage(
+        "Unable to load quotes from the database."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
     loadQuotes();
   }, []);
 
@@ -169,6 +168,17 @@ function QuoteList() {
       total + getCalculation(quote).finalTotal,
     0
   );
+
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(`/api/user_selections/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`HTTP error, status: ${res.status}`);
+      setCurrentLog((prev) => prev.filter((record) => record.id !== id));
+      await loadQuotes();
+    } catch (error) {
+      console.error("Failed to delete quote:", error);
+    }
+  };
 
   const handleEdit = (quote) => {
     const id = getQuoteId(quote);
@@ -621,7 +631,7 @@ function QuoteList() {
 
 			        {calculation.discount > 0 && (
 			          <div className="steps">
-			            <span>Annual discount</span>
+			            <span>Annual discount ({quote.annual_discount * 100}%)</span>
 			            <span>-${calculation.discount.toFixed(2)}</span>
 			          </div>
 			        )}
@@ -645,6 +655,9 @@ function QuoteList() {
 			  <button type="button" className="edit-button" onClick={() => handleEdit(quote)}>
 			    Edit
 			  </button>
+                          <button type="button" className="delete-button" onClick={() => handleDelete(quote.id)}>
+                            Delete
+                          </button>
 			</td>                          
                           </tr>
                         );

@@ -60,7 +60,7 @@ function EditQuote() {
         setHospitalCover(quote.hospital_cover ?? "");
         setExtrasCover(quote.extras_cover ?? "");
         setPaymentFrequency(quote.payment_frequency ?? "");
-        setAnnualDiscount(quote.annual_discount ?? 0);
+        setAnnualDiscount(quote.annual_discount * 100 ?? 0);
         setNotes(quote.notes ?? "");
 
         if (hospitalResponse.ok) {
@@ -141,7 +141,7 @@ function EditQuote() {
       hospital_cover: hospitalCover.trim(),
       extras_cover: extrasCover.trim(),
       payment_frequency: paymentFrequency.trim().toLowerCase(),
-      annual_discount: Number(annualDiscount) || 0,
+      annual_discount: Number(annualDiscount)/100 || 0,
       notes: notes.trim(),
     };
 
@@ -456,6 +456,24 @@ function EditQuote() {
               </option>
             </select>
           </div>
+	  
+	  <div className="field">
+	    <label htmlFor="notes">Annual Discount(in %)</label>
+                <input
+                  id="annual-discount"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={annualDiscount}
+                  onChange={(e) =>
+                    setAnnualDiscount(
+                      e.target.value
+                    )
+                  }
+                  required
+                />
+
+	  </div>
 
           <div className="field">
             <label htmlFor="notes">
@@ -476,7 +494,7 @@ function EditQuote() {
             <button
               type="button"
               className="cancel-button"
-              onClick={() => navigate("/quotes")}
+              onClick={() => navigate("/quote-list")}
               disabled={saving}
             >
               Cancel

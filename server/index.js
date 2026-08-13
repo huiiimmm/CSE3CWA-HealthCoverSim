@@ -111,6 +111,17 @@ app.get("/user_selections/:id", (req,res)=>{
     );
   });
 
+app.delete("/user_selections/:id", (req, res) => {
+  const {id} = req.params;
+  db.run("DELETE FROM user_selections WHERE id = ?", [id], function (error){
+    if(error) {
+	return res.status(500).json({ error: "Failed to delete quote." });
+    } if (this.changes === 0) {
+	return res.status(404).json({ error: "Quote not found." });
+    } res.json({ deleted: id});
+  });
+  });
+
 app.put("/user_selections/:id", (req, res) => {
   const { id } = req.params;
 
@@ -279,13 +290,14 @@ app.post("/save-record", (req, res) => {
         applicant2CoverHistory,
         selectedHospitalTier,
         selectedExtraTier,
-        selectedPaymentFrequency
+        selectedPaymentFrequency,
+	annualDiscount
   } = req.body;
   
   const sqlQuery = `
         INSERT INTO user_selections
-        (customer_name, cover_type, applicant1_age, applicant_1_cover_history, applicant_2_age, applicant_2_cover_history, hospital_cover, extras_cover, payment_frequency)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (customer_name, cover_type, applicant1_age, applicant_1_cover_history, applicant_2_age, applicant_2_cover_history, hospital_cover, extras_cover, payment_frequency, annual_discount)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const valuesInput = [
         customerName,
@@ -296,7 +308,8 @@ app.post("/save-record", (req, res) => {
         applicant2CoverHistory === '' ? null : applicant2CoverHistory,
         selectedHospitalTier,
         selectedExtraTier,
-        selectedPaymentFrequency
+        selectedPaymentFrequency,
+	annualDiscount
   ];
 
   db.run(sqlQuery, valuesInput, function (error) {
@@ -326,3 +339,4 @@ app.post("/save-record", (req, res) => {
     );
   });
 });
+
