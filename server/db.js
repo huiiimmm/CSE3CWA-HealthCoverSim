@@ -59,7 +59,7 @@ db.serialize(() => {
 	hospital_cover TEXT NOT NULL,
 	extras_cover TEXT NOT NULL,
 	payment_frequency TEXT NOT NULL,
-	annual_discount REAL DEFAULT 0.0,
+	annual_discount REAL DEFAULT 0.05,
 	notes TEXT,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );

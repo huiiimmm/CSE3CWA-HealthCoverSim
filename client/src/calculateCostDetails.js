@@ -1,3 +1,18 @@
+export function toCalculatorRecord(quote) {
+  return {
+    hospital_cover: quote.hospital_cover,
+    extras_cover: quote.extras_cover,
+    cover_type: quote.cover_type,
+    selectedFamilyCoverage: quote.cover_type,
+    applicant1Age: quote.applicant1_age,
+    applicant1CoverHistory: quote.applicant_1_cover_history,
+    applicant2Age: quote.applicant_2_age,
+    applicant2CoverHistory: quote.applicant_2_cover_history,
+    selectedPaymentFrequency: quote.payment_frequency,
+    annual_discount: quote.annual_discount,
+  };
+};
+
 export const calculateCostDetails = (
   record,
   hospital_tiers=[],
@@ -100,12 +115,9 @@ export const calculateCostDetails = (
     extrasTotal +
     familyFee;
 
-  const annualDiscount = 
-    Number(record.annual_discount) || 0;
-
   const discount =
     record.selectedPaymentFrequency?.toLowerCase() === "yearly"
-      ? monthlyPremium * 12 * 0.05
+      ? monthlyPremium * 12 * record.annual_discount
       : 0;
 
   const finalTotal =

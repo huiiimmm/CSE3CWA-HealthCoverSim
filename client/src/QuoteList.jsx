@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { calculateCostDetails, calculateCost } from "./calculateCostDetails";
+import { calculateCostDetails, calculateCost, toCalculatorRecord } from "./calculateCostDetails";
 
 function QuoteList() {
   const navigate = useNavigate();
@@ -113,7 +113,7 @@ function QuoteList() {
 
   const getCalculation = (quote) => {
   return calculateCostDetails(
-    quote,
+    toCalculatorRecord(quote),
     hospital_tiers,
     extra_tiers,
     family_coverage
@@ -363,7 +363,7 @@ function QuoteList() {
 
         .loading,
         .empty,
-        .error {
+        .error {	
           padding: 30px 10px;
           text-align: center;
         }
@@ -501,14 +501,9 @@ function QuoteList() {
                   <tbody>
                     {filteredQuotes.map(
                       (quote, index) => {
-                        const calculation = calculateCostDetails(quote, hospital_tiers, extra_tiers, family_coverage);
+                        const calculation = calculateCostDetails(toCalculatorRecord(quote), hospital_tiers, extra_tiers, family_coverage);
                         return (
-                          <tr
-                            key={
-                              getQuoteId(quote) ??
-                              index
-                            }
-                          >
+                          <tr key={getQuoteId(quote) ?? index}>
                             <td>
                               {getCustomerName(quote)}
                             </td>
@@ -544,136 +539,113 @@ function QuoteList() {
                             <td>
                               {getPaymentFrequency(quote)}
                             </td>
+			<td>
+			  <div className="steps">
+			    <div className="steps">
+			      <span>Applicant 1 hospital cover</span>
+			      <span>${calculation.applicant1Base.toFixed(2)}</span>
+			    </div>
+	
+			    {calculation.applicant1Loading > 0 && (
+			      <div className="steps">
+			        <span>Applicant 1 age loading</span>
+			        <span>
+			          +{(calculation.applicant1Loading * 100).toFixed(0)}%
+			          (${(calculation.applicant1Total - calculation.applicant1Base).toFixed(2)})
+			        </span>
+			      </div>
+			    )}
 
-                            <td>
-                              <div className="steps">
-                                <div>
-                                  <span>
-                                    Applicant 1
-                                  </span>
+			    <div className="steps">
+			      <span>Applicant 1 total</span>
+			      <span>${calculation.applicant1Total.toFixed(2)}</span>
+			    </div>
 
-                                  <span>
-                                    ${calculation.applicant1Total.toFixed(2)}
-                                  </span>
-                                </div>
+			    {getFamilyCoverage(quote) !== "single" && (
+			      <>
+			        <div className="steps">
+			          <span>Applicant 2 hospital cover</span>
+			          <span>${calculation.applicant2Base.toFixed(2)}</span>
+			        </div>
 
-                                {calculation.adultCount ===
-                                  2 && (
-                                  <div>
-                                    <span>
-                                      Applicant 2
-                                    </span>
+			        {calculation.applicant2Loading > 0 && (
+			          <div className="steps">
+			            <span>Applicant 2 age loading</span>
+			            <span>
+			              +{(calculation.applicant2Loading * 100).toFixed(0)}%
+			              (${(calculation.applicant2Total - calculation.applicant2Base).toFixed(2)})
+			            </span>
+			          </div>
+			        )}
 
-                                    <span>
-                                      $
-                                      {calculation.applicant2Total.toFixed(
-                                        2
-                                      )}
-                                    </span>
-                                  </div>
-                                )}
+			        <div className="steps">
+			          <span>Applicant 2 total</span>
+			          <span>${calculation.applicant2Total.toFixed(2)}</span>
+			        </div>
+			      </>
+			    )}
 
-                                <div>
-                                  <span>
-                                    Hospital
-                                  </span>
+			    <div className="steps">
+			      <span>Hospital cover total</span>
+			      <span>${calculation.hospitalTotal.toFixed(2)}</span>
+			    </div>
 
-                                  <span>
-                                    $
-                                    {calculation.hospitalTotal.toFixed(
-                                      2
-                                    )}
-                                  </span>
-                                </div>
+			    <div className="steps">
+			      <span>Extras cover</span>
+			      <span>${calculation.extrasTotal.toFixed(2)}</span>
+			    </div>
 
-                                <div>
-                                  <span>
-                                    Extras
-                                  </span>
+			    <div className="steps">
+			      <span>Family coverage fee</span>
+			      <span>${calculation.familyFee.toFixed(2)}</span>
+			    </div>
 
-                                  <span>
-                                    $
-                                    {calculation.extrasTotal.toFixed(
-                                      2
-                                    )}
-                                  </span>
-                                </div>
+			    <div className="steps">
+			      <span>Monthly premium</span>
+			      <span>${calculation.monthlyPremium.toFixed(2)}</span>
+			    </div>
 
-                                <div>
-                                  <span>
-                                    Family Fee
-                                  </span>
+			    <div className="formula">
+			      Hospital (${calculation.hospitalTotal.toFixed(2)}) +
+			      Extras (${calculation.extrasTotal.toFixed(2)}) +
+			      Family fee (${calculation.familyFee.toFixed(2)})
+			      = Monthly premium (${calculation.monthlyPremium.toFixed(2)})
+			    </div>
 
-                                  <span>
-                                    $
-                                    {calculation.familyFee.toFixed(
-                                      2
-                                    )}
-                                  </span>
-                                </div>
+			    {quote.payment_frequency === "yearly" && (
+			      <>
+			        <div className="steps">
+			          <span>Annual price before discount</span>
+			          <span>${(calculation.monthlyPremium * 12).toFixed(2)}</span>
+			        </div>
 
-                                <div>
-                                  <span>
-                                    Monthly
-                                  </span>
+			        {calculation.discount > 0 && (
+			          <div className="steps">
+			            <span>Annual discount</span>
+			            <span>-${calculation.discount.toFixed(2)}</span>
+			          </div>
+			        )}
 
-                                  <span>
-                                    $
-                                    {calculation.monthlyPremium.toFixed(
-                                      2
-                                    )}
-                                  </span>
-                                </div>
+			        <div className="formula">
+			          (${calculation.monthlyPremium.toFixed(2)} × 12) − ${calculation.discount.toFixed(2)} = ${calculation.finalTotal.toFixed(2)}
+			        </div>
+			      </>
+			    )}
 
-                                {calculation.discount >
-                                  0 && (
-                                  <div>
-                                    <span>
-                                      Discount
-                                    </span>
-
-                                    <span>
-                                      -$
-                                      {calculation.discount.toFixed(
-                                        2
-                                      )}
-                                    </span>
-                                  </div>
-                                )}
-
-                                <div className="final">
-                                  <span>
-                                    Final
-                                  </span>
-
-                                  <span>
-                                    $
-                                    {calculation.finalTotal.toFixed(
-                                      2
-                                    )}
-                                  </span>
-                                </div>
-                              </div>
-                            </td>
-
-                            <td className="cost">
-                              $
-                              {calculation.finalTotal.toFixed(
-                                2
-                              )}
-                            </td>
-
-                            <td>
-                              <button
-                                type="button"
-                                className="edit-button"
-                                onClick={() =>
-                                  handleEdit(quote)
-                                }
-                              >
-                                Edit
-                              </button>
-                            </td>
+			    <div className="steps final">
+			      <span>Final {quote.payment_frequency} cost</span>
+			      <span>
+				${calculation.finalTotal.toFixed(2)}
+			      </span>
+			    </div>
+			  </div>
+			</td>
+			<td className="cost">${calculation.finalTotal.toFixed(2)}</td>
+			<td>
+			  <button type="button" className="edit-button" onClick={() => handleEdit(quote)}>
+			    Edit
+			  </button>
+			</td>                          
                           </tr>
                         );
                       }

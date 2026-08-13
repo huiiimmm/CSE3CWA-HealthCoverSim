@@ -12,11 +12,9 @@ function EditQuote() {
   const [customerName, setCustomerName] = useState("");
   const [coverType, setCoverType] = useState("");
   const [applicant1Age, setApplicant1Age] = useState("");
-  const [applicant1CoverHistory, setApplicant1CoverHistory] =
-    useState("");
+  const [applicant1CoverHistory, setApplicant1CoverHistory] = useState("");
   const [applicant2Age, setApplicant2Age] = useState("");
-  const [applicant2CoverHistory, setApplicant2CoverHistory] =
-    useState("");
+  const [applicant2CoverHistory, setApplicant2CoverHistory] = useState("");
   const [hospitalCover, setHospitalCover] = useState("");
   const [extrasCover, setExtrasCover] = useState("");
   const [paymentFrequency, setPaymentFrequency] = useState("");
@@ -28,8 +26,7 @@ function EditQuote() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const isTwoAdultCover =
-    coverType.toLowerCase() === "couple" ||
-    coverType.toLowerCase() === "family";
+    coverType.toLowerCase() === "couple" || coverType.toLowerCase() === "family";
 
   useEffect(() => {
     const loadData = async () => {
@@ -56,57 +53,33 @@ function EditQuote() {
 
         setCustomerName(quote.customer_name ?? "");
         setCoverType(quote.cover_type ?? "");
-        setApplicant1Age(
-          quote.applicant1_age ?? ""
-        );
-        setApplicant1CoverHistory(
-          quote.applicant_1_cover_history ?? ""
-        );
-        setApplicant2Age(
-          quote.applicant_2_age ?? ""
-        );
-        setApplicant2CoverHistory(
-          quote.applicant_2_cover_history ?? ""
-        );
-        setHospitalCover(
-          quote.hospital_cover ?? ""
-        );
-        setExtrasCover(
-          quote.extras_cover ?? ""
-        );
-        setPaymentFrequency(
-          quote.payment_frequency ?? ""
-        );
-        setAnnualDiscount(
-          quote.annual_discount ?? 0
-        );
+        setApplicant1Age(quote.applicant1_age ?? "");
+        setApplicant1CoverHistory(quote.applicant_1_cover_history ?? "");
+        setApplicant2Age(quote.applicant_2_age ?? "");
+        setApplicant2CoverHistory(quote.applicant_2_cover_history ?? "");
+        setHospitalCover(quote.hospital_cover ?? "");
+        setExtrasCover(quote.extras_cover ?? "");
+        setPaymentFrequency(quote.payment_frequency ?? "");
+        setAnnualDiscount(quote.annual_discount ?? 0);
         setNotes(quote.notes ?? "");
 
         if (hospitalResponse.ok) {
           const data = await hospitalResponse.json();
-          setHospital_tiers(
-            Array.isArray(data) ? data : []
-          );
+          setHospital_tiers(Array.isArray(data) ? data : []);
         }
 
         if (extraResponse.ok) {
           const data = await extraResponse.json();
-          setExtra_tiers(
-            Array.isArray(data) ? data : []
-          );
+          setExtra_tiers(Array.isArray(data) ? data : []);
         }
 
         if (familyResponse.ok) {
           const data = await familyResponse.json();
-          setFamily_coverage(
-            Array.isArray(data) ? data : []
-          );
+          setFamily_coverage(Array.isArray(data) ? data : []);
         }
       } catch (error) {
         console.error("Failed to load quote:", error);
-        setErrorMessage(
-          "Unable to load this quote."
-        );
+        setErrorMessage("Unable to load this quote.");
       } finally {
         setLoading(false);
       }
@@ -125,8 +98,7 @@ function EditQuote() {
 
     if (
       !Number.isInteger(Number(applicant1Age)) ||
-      Number(applicant1Age) < 18 ||
-      Number(applicant1Age) > 100
+      Number(applicant1Age) < 18 || Number(applicant1Age) > 100
     ) {
       alert("Applicant 1 age must be between 18 and 100.");
       return;
@@ -135,8 +107,7 @@ function EditQuote() {
     if (
       isTwoAdultCover &&
       (!Number.isInteger(Number(applicant2Age)) ||
-        Number(applicant2Age) < 18 ||
-        Number(applicant2Age) > 100)
+        Number(applicant2Age) < 18 || Number(applicant2Age) > 100)
     ) {
       alert("Applicant 2 age must be between 18 and 100.");
       return;
@@ -144,8 +115,7 @@ function EditQuote() {
 
     if (
       !applicant1CoverHistory ||
-      (isTwoAdultCover &&
-        !applicant2CoverHistory)
+      (isTwoAdultCover && !applicant2CoverHistory)
     ) {
       alert("Please select cover history.");
       return;
@@ -165,19 +135,12 @@ function EditQuote() {
       customer_name: customerName.trim(),
       cover_type: coverType.trim().toLowerCase(),
       applicant1_age: Number(applicant1Age),
-      applicant_1_cover_history:
-        applicant1CoverHistory.toLowerCase(),
-      applicant_2_age: isTwoAdultCover
-        ? Number(applicant2Age)
-        : null,
-      applicant_2_cover_history:
-        isTwoAdultCover
-          ? applicant2CoverHistory.toLowerCase()
-          : null,
+      applicant_1_cover_history: applicant1CoverHistory.toLowerCase(),
+      applicant_2_age: isTwoAdultCover ? Number(applicant2Age) : null,
+      applicant_2_cover_history: isTwoAdultCover ? applicant2CoverHistory.toLowerCase() : null,
       hospital_cover: hospitalCover.trim(),
       extras_cover: extrasCover.trim(),
-      payment_frequency:
-        paymentFrequency.trim().toLowerCase(),
+      payment_frequency: paymentFrequency.trim().toLowerCase(),
       annual_discount: Number(annualDiscount) || 0,
       notes: notes.trim(),
     };

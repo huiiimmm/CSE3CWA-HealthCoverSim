@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { calculateCost, calculateCostDetails } from "./calculateCostDetails";
+import { calculateCost, calculateCostDetails, toCalculatorRecord } from "./calculateCostDetails";
 
 function App() {
   const navigate = useNavigate();
@@ -220,41 +220,10 @@ function App() {
       });
   };
 
-  const getCalculationRecord = (record) => ({
-    ...record,
-
-    selectedFamilyCoverage:
-      record.cover_type ?? record.selectedFamilyCoverage,
-
-    applicant1Age:
-      record.applicant1_age ?? record.applicant1Age,
-
-    applicant1CoverHistory:
-      record.applicant_1_cover_history ?? record.applicant1CoverHistory,
-
-    applicant2Age:
-      record.applicant_2_age ?? record.applicant2Age,
-
-    applicant2CoverHistory:
-      record.applicant_2_cover_history ?? record.applicant2CoverHistory,
-
-    selectedHospitalTier:
-      record.hospital_cover ?? record.selectedHospitalTier,
-
-    selectedExtraTier:
-      record.extras_cover ?? record.selectedExtraTier,
-
-    selectedPaymentFrequency:
-      record.payment_frequency ?? record.selectedPaymentFrequency,
-  });
-
   const totalCost = currentLog.reduce(
     (total, record) => {
-      const calculationRecord =
-        getCalculationRecord(record);
-
       const calculation = calculateCostDetails(
-        calculationRecord,
+        toCalculatorRecord(record),
         hospital_tiers,
         extra_tiers,
         family_coverage
@@ -641,7 +610,6 @@ function App() {
             <p>
               Enter customer details and select the required cover.
             </p>
-
           </header>
           <section className="card">
             <h2>Customer Details</h2>
@@ -709,11 +677,7 @@ function App() {
                 <select
                   id="payment-frequency-select"
                   value={selectedPaymentFrequency}
-                  onChange={(e) =>
-                    setSelectedPaymentFrequency(
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) =>setSelectedPaymentFrequency(e.target.value)}
                 >
                   <option value="">-- Choose a Frequency Option --</option>
 
@@ -921,7 +885,7 @@ function App() {
                       <th>Applicant 2 History</th>
                       <th>Hospital</th>
                       <th>Extras</th>
-                      <th>Payment</th>
+                      <th>Payment Frequency</th>
                       <th>Cost</th>
                     </tr>
                   </thead>
@@ -929,11 +893,9 @@ function App() {
                   <tbody>
                     {currentLog.map(
                       (record, index) => {
-                        const calculationRecord = getCalculationRecord(record);
-
                         const calculation =
                           calculateCostDetails(
-                            calculationRecord,
+                            toCalculatorRecord(record),
                             hospital_tiers,
                             extra_tiers,
                             family_coverage
@@ -982,14 +944,9 @@ function App() {
 
               {currentLog.map(
                 (record, index) => {
-                  const calculationRecord =
-                    getCalculationRecord(
-                      record
-                    );
-
                   const calculation =
                     calculateCostDetails(
-                      calculationRecord,
+                      toCalculatorRecord(record),
                       hospital_tiers,
                       extra_tiers,
                       family_coverage
@@ -1092,20 +1049,22 @@ function App() {
 			
 			= Monthly premium (${calculation.monthlyPremium.toFixed(2)})
                       </div>
+                     <div className="calculation-row">
+                        <span className="calculation-label">Yearly premium without discount</span>
 
-                      {calculationRecord.selectedPaymentFrequency ===
-                        "yearly" && (
+                        <span className="calculation-value">${(calculation.monthlyPremium * 12).toFixed(2)}</span>
+                      </div>
+
+                      <div className="formula">
+                        Hospital (${calculation.hospitalTotal.toFixed(2)}) +
+                        Extras (${calculation.extrasTotal.toFixed(2)}) +
+                        Family fee (${calculation.familyFee.toFixed(2)}) * 12
+
+                        = Yearly premium (${(calculation.monthlyPremium * 12).toFixed(2)})
+                      </div>
+
+                      {calculation.selectedPaymentFrequency  === "yearly" && (
                         <>
-                          <div className="calculation-row">
-                            <span className="calculation-label">
-                              Annual price before discount
-                            </span>
-
-                            <span className="calculation-value">
-			      ${(calculation.monthlyPremium * 12).toFixed(2)}
-                            </span>
-                          </div>
-
                           <div className="calculation-row">
                             <span className="calculation-label">5% annual discount</span>
 
@@ -1125,7 +1084,7 @@ function App() {
                       <div className="calculation-row calculation-total">
                         <span>
                           Final{" "}
-                          {calculationRecord.selectedPaymentFrequency}
+                          {calculation.selectedPaymentFrequency}
 			  {" "}
                           cost
                         </span>
